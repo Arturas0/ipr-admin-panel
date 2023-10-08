@@ -14,6 +14,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Dto\EntityDto;
 use EasyCorp\Bundle\EasyAdminBundle\Dto\SearchDto;
+use EasyCorp\Bundle\EasyAdminBundle\Field\BooleanField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ChoiceField;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IntegerField;
@@ -48,18 +49,25 @@ class AdvanceRegistrationCrudController extends AbstractCrudController
         yield ChoiceField::new('municipality_code')
             ->setLabel('Municipality')
             ->setChoices($this->getMunicipalityChoices());
+
         yield ChoiceField::new('doctor_type')
             ->setLabel('Specialist')
             ->setChoices($this->getDoctorTypeChoices());
+
         yield ChoiceField::new('organisation_code')
             ->setLabel('Organisation')
-            ->setChoices($this->getOrganisationChoices())
-        ;
+            ->setChoices($this->getOrganisationChoices());
+
         yield ChoiceField::new('profession')
         ->setLabel('Healthcare service')
         ->setChoices($this->getHealthCareServiceChoices());
+
         yield IntegerField::new('doctor');
+
         yield IntegerField::new('medical_service');
+
+        yield BooleanField::new('status')
+        ->setLabel('Active');
     }
 
     public function createIndexQueryBuilder(

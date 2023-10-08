@@ -50,6 +50,9 @@ class AdvanceRegistration
     #[ORM\Column(nullable: true)]
     private array $excluded_fund_types = [];
 
+    #[ORM\Column(nullable: true)]
+    private ?bool $status = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -181,6 +184,18 @@ class AdvanceRegistration
     public function setExcludedFundTypes(?array $excluded_fund_types): static
     {
         $this->excluded_fund_types = $excluded_fund_types;
+
+        return $this;
+    }
+
+    public function getStatus(): ?bool
+    {
+        return $this->status;
+    }
+
+    public function setStatus(?bool $status): static
+    {
+        $this->status = $status;
 
         return $this;
     }

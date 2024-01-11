@@ -14,9 +14,11 @@ use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Dto\EntityDto;
 use EasyCorp\Bundle\EasyAdminBundle\Dto\SearchDto;
+use EasyCorp\Bundle\EasyAdminBundle\Field\BooleanField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ChoiceField;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IntegerField;
+use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -48,18 +50,27 @@ class AdvanceRegistrationCrudController extends AbstractCrudController
         yield ChoiceField::new('municipality_code')
             ->setLabel('Municipality')
             ->setChoices($this->getMunicipalityChoices());
+
         yield ChoiceField::new('doctor_type')
             ->setLabel('Specialist')
             ->setChoices($this->getDoctorTypeChoices());
+
         yield ChoiceField::new('organisation_code')
             ->setLabel('Organisation')
-            ->setChoices($this->getOrganisationChoices())
-        ;
+            ->setChoices($this->getOrganisationChoices());
+
         yield ChoiceField::new('profession')
         ->setLabel('Healthcare service')
         ->setChoices($this->getHealthCareServiceChoices());
-        yield IntegerField::new('doctor');
+
+        yield ChoiceField::new('doctor')
+            ->setLabel('Specific doctor')
+            ->setChoices($this->getSpecialistChoices());
+
         yield IntegerField::new('medical_service');
+
+        yield BooleanField::new('status')
+        ->setLabel('Active');
     }
 
     public function createIndexQueryBuilder(
@@ -111,49 +122,81 @@ class AdvanceRegistrationCrudController extends AbstractCrudController
 
     private function getDoctorTypeChoices(): \Closure
     {
-        return function () {
-            $data = $this->httpClient
-                ->request('GET', 'https://ipr.esveikata.lt/api/searchesNew/professions')
-                ->toArray();
+        $cache = new FilesystemAdapter();
 
-            $choices = [];
-            foreach ($data['data'] as $item) {
-                $choices[$item['name']] = $item['code'];
-            }
+        return $cache->get('doctor_type_choices', function () {
+            return function () {
+                $data = $this->httpClient
+                    ->request('GET', 'https://ipr.esveikata.lt/api/searchesNew/professions')
+                    ->toArray();
 
-            return $choices;
-        };
+                $choices = [];
+                foreach ($data['data'] as $item) {
+                    $choices[$item['name']] = $item['code'];
+                }
+
+                return $choices;
+            };
+        });
     }
 
     private function getOrganisationChoices(): \Closure
     {
-        return function () {
-            $data = $this->httpClient
-                ->request('GET', 'https://ipr.esveikata.lt/api/searchesNew/institutions')
-                ->toArray();
+        $cache = new FilesystemAdapter();
 
-            $choices = [];
-            foreach ($data['data'] as $item) {
-                $choices[$item['istgPavadinimas']] = $item['istgId'];
-            }
+        return $cache->get('organisation_choices', function () {
+            return function () {
+                $data = $this->httpClient
+                    ->request('GET', 'https://ipr.esveikata.lt/api/searchesNew/institutions')
+                    ->toArray();
 
-            return $choices;
-        };
+                $choices = [];
+                foreach ($data['data'] as $item) {
+                    $choices[$item['istgPavadinimas']] = $item['istgId'];
+                }
+
+                return $choices;
+            };
+        });
     }
 
     private function getHealthCareServiceChoices(): \Closure
     {
-        return function () {
-            $data = $this->httpClient
-                ->request('GET', 'https://ipr.esveikata.lt/api/searchesNew/healthcare-filter-services')
-                ->toArray();
+        $cache = new FilesystemAdapter();
 
-            $choices = [];
-            foreach ($data['data'] as $item) {
-                $choices[$item['name']] = $item['id'];
-            }
+        return $cache->get('health_care_service_choices', function () {
+            return function () {
+                $data = $this->httpClient
+                    ->request('GET', 'https://ipr.esveikata.lt/api/searchesNew/healthcare-filter-services')
+                    ->toArray();
 
-            return $choices;
-        };
+                $choices = [];
+                foreach ($data['data'] as $item) {
+                    $choices[$item['name']] = $item['id'];
+                }
+
+                return $choices;
+            };
+        });
+    }
+
+    private function getSpecialistChoices(): \Closure
+    {
+        $cache = new FilesystemAdapter();
+
+        return $cache->get('specialist_choices', function () {
+            return function () {
+                $data = $this->httpClient
+                    ->request('GET', 'https://ipr.esveikata.lt/api/searchesNew/specialists')
+                    ->toArray();
+
+                $choices = [];
+                foreach ($data['data'] as $item) {
+                    $choices[$item['fullName']] = $item['id'];
+                }
+
+                return $choices;
+            };
+        });
     }
 }
